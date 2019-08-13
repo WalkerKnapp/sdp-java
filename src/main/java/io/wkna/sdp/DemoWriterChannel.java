@@ -8,7 +8,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 
-public class DemoReaderChannel implements ReadableByteChannel {
+public class DemoWriterChannel implements ReadableByteChannel {
 
     private SourceDemo demo;
 
@@ -18,7 +18,7 @@ public class DemoReaderChannel implements ReadableByteChannel {
 
     private boolean open = true;
 
-    DemoReaderChannel(SourceDemo demo) {
+    DemoWriterChannel(SourceDemo demo) {
         this.demo = demo;
     }
 
@@ -52,7 +52,7 @@ public class DemoReaderChannel implements ReadableByteChannel {
 
         // Try to write as much of the header as possible
         if(amtHeaderRead < demo.getHeaderFlattenedSize()) {
-            read = demo.readHeader(dst, remaining, amtHeaderRead);
+            read = demo.writeHeader(dst, remaining, amtHeaderRead);
             remaining -= read;
             amtHeaderRead += read;
             totalRead += read;

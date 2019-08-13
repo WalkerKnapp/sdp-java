@@ -2,11 +2,9 @@ package io.wkna.sdp;
 
 import io.wkna.sdp.messages.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.util.ArrayList;
@@ -101,11 +99,63 @@ public class SourceDemo {
         return demo;
     }
 
-    public long getHeaderFlattenedSize() {
+    public String getDemoFileStamp() {
+        return demoFileStamp;
+    }
+
+    public int getDemoProtocol() {
+        return demoProtocol;
+    }
+
+    public int getNetworkProtocol() {
+        return networkProtocol;
+    }
+
+    public String getServerName() {
+        return serverName;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public String getMapName() {
+        return mapName;
+    }
+
+    public String getGameDirectory() {
+        return gameDirectory;
+    }
+
+    public float getPlaybackTime() {
+        return playbackTime;
+    }
+
+    public int getPlaybackTicks() {
+        return playbackTicks;
+    }
+
+    public int getPlaybackFrames() {
+        return playbackFrames;
+    }
+
+    public int getSignOnLength() {
+        return signOnLength;
+    }
+
+    public ArrayList<DemoMessage> getMessages() {
+        return messages;
+    }
+
+    public DemoWriterChannel createWriter() {
+        return new DemoWriterChannel(this);
+    }
+
+    long getHeaderFlattenedSize() {
         return 8 + 4 + 4 + 260 + 260 + 260 + 260 + 4 + 4 + 4 + 4;
     }
 
-    public int readHeader(ByteBuffer buffer, int remaining, int offset) {
+    int writeHeader(ByteBuffer buffer, int remaining, int offset) {
 
         int writeSize;
         int totalWrites = 0;
@@ -172,14 +222,6 @@ public class SourceDemo {
         }
     }
 
-    public ArrayList<DemoMessage> getMessages() {
-        return messages;
-    }
-
-    public DemoReaderChannel createReader() {
-        return new DemoReaderChannel(this);
-    }
-
     public static void main(String[] args) throws IOException {
         Path copyPath = Paths.get("H:\\Portal 2\\Rendering\\copy.dem");
         SourceDemo demo = parse(Paths.get("H:\\Portal 2\\Rendering\\BombFlings_2268_spidda.dem"), false);
@@ -187,7 +229,7 @@ public class SourceDemo {
         Files.deleteIfExists(copyPath);
         Files.createFile(copyPath);
         try (FileChannel channel = FileChannel.open(copyPath, StandardOpenOption.WRITE);
-            DemoReaderChannel reader = demo.createReader()) {
+            DemoWriterChannel reader = demo.createWriter()) {
             channel.transferFrom(reader, 0, reader.remaining());
         }
     }

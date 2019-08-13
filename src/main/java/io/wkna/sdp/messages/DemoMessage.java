@@ -21,6 +21,14 @@ public abstract class DemoMessage {
         }
     }
 
+    public int getTick() {
+        return tick;
+    }
+
+    public void setTick(int tick) {
+        this.tick = tick;
+    }
+
     public long getFlattenedSize() {
         if(alignmentByte) {
             return 1 + 4 + 1 + getDataSize();

@@ -97,6 +97,7 @@ public class DemoWriterChannel implements SeekableByteChannel {
                 if(messagePos < demo.getMessages().get(i).getFlattenedSize()) {
                     currentMessage = i;
                     amtCurrentMessageRead = demo.getMessages().get(i).getFlattenedSize() - messagePos;
+                    break;
                 } else {
                     messagePos -= demo.getMessages().get(i).getFlattenedSize();
                 }

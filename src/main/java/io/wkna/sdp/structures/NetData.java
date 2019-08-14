@@ -37,6 +37,10 @@ public class NetData {
         }*/
     }
 
+    public byte[] getData() {
+        return data;
+    }
+
     public int getDataSizeFlattened() {
         return data.length + 1;
     }

@@ -36,6 +36,10 @@ public class PacketMessage extends DemoMessage {
         }
     }
 
+    public NetData getNetData() {
+        return data;
+    }
+
     @Override
     long getDataSize() {
         return (76 * packetInfo.length) + 4 + 4 + 4 + dataSize;

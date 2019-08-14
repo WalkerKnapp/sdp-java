@@ -5,33 +5,22 @@ import io.wkna.sdp.messages.DemoMessage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.NonWritableChannelException;
+import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
 
-public class DemoWriterChannel implements ReadableByteChannel {
+public class DemoWriterChannel implements SeekableByteChannel {
 
     private SourceDemo demo;
 
-    private int amtHeaderRead = 0;
+    private long amtHeaderRead = 0;
     private int currentMessage = 0;
-    private int amtCurrentMessageRead = 0;
+    private long amtCurrentMessageRead = 0;
 
     private boolean open = true;
 
     DemoWriterChannel(SourceDemo demo) {
         this.demo = demo;
-    }
-
-    public long remaining() {
-        long remaining = demo.getHeaderFlattenedSize() - amtHeaderRead;
-
-        ArrayList<DemoMessage> messages = demo.getMessages();
-        remaining += messages.get(currentMessage).getFlattenedSize() - amtCurrentMessageRead;
-        for(int i = currentMessage + 1; i < messages.size(); i++) {
-            remaining += messages.get(currentMessage).getFlattenedSize();
-        }
-
-        return remaining;
     }
 
     @Override
@@ -82,6 +71,62 @@ public class DemoWriterChannel implements ReadableByteChannel {
 
         dst.position(totalRead);
         return totalRead;
+    }
+
+    @Override
+    public long position() {
+        long pos = amtHeaderRead;
+        for(int i = 0; i < currentMessage; i++) {
+            pos += demo.getMessages().get(i).getFlattenedSize();
+        }
+        pos += amtCurrentMessageRead;
+        return pos;
+    }
+
+    @Override
+    public SeekableByteChannel position(long newPosition) {
+        if (newPosition < demo.getHeaderFlattenedSize()) {
+            amtHeaderRead = newPosition;
+            currentMessage = 0;
+            amtCurrentMessageRead = 0;
+        } else {
+            amtHeaderRead = demo.getHeaderFlattenedSize();
+
+            long messagePos =  newPosition - demo.getHeaderFlattenedSize();
+            for(int i = 0; i < demo.getMessages().size(); i++) {
+                if(messagePos < demo.getMessages().get(i).getFlattenedSize()) {
+                    currentMessage = i;
+                    amtCurrentMessageRead = demo.getMessages().get(i).getFlattenedSize() - messagePos;
+                } else {
+                    messagePos -= demo.getMessages().get(i).getFlattenedSize();
+                }
+            }
+        }
+
+        return this;
+    }
+
+    @Override
+    public long size() {
+        long remaining = demo.getHeaderFlattenedSize() - amtHeaderRead;
+
+        ArrayList<DemoMessage> messages = demo.getMessages();
+        remaining += messages.get(currentMessage).getFlattenedSize() - amtCurrentMessageRead;
+        for(int i = currentMessage + 1; i < messages.size(); i++) {
+            remaining += messages.get(currentMessage).getFlattenedSize();
+        }
+
+        return remaining;
+    }
+
+    @Override
+    public int write(ByteBuffer src) {
+        throw new NonWritableChannelException();
+    }
+
+    @Override
+    public SeekableByteChannel truncate(long size) {
+        throw new NonWritableChannelException();
     }
 
     @Override

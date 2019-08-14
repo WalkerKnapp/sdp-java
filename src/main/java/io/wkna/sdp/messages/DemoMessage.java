@@ -39,58 +39,41 @@ public abstract class DemoMessage {
 
     abstract long getDataSize();
 
-    public int write(ByteBuffer dst, int remaining, int offset) {
+    public int write(ByteBuffer dst, int remaining, long offset) {
         int writeSize;
         int totalWrites = 0;
 
-        if(alignmentByte) {
-            switch (offset) {
-                case 0:
-                    if ((writeSize = writeByte(getMessageType(), dst, remaining - totalWrites)) == 0) {
-                        return totalWrites;
-                    }
-                    totalWrites += writeSize;
-                case 1:
-                    if ((writeSize = writeInt(tick, dst, remaining - totalWrites)) == 0) {
-                        return totalWrites;
-                    }
-                    totalWrites += writeSize;
-                case 1+4:
-                    if ((writeSize = writeByte((byte) 0x00, dst, remaining - totalWrites)) == 0) {
-                        return totalWrites;
-                    }
-                    totalWrites += writeSize;
-                case 1+4+1:
-                    return totalWrites + writeData(dst, remaining - totalWrites, 0);
-                default:
-                    if(offset > 1+4+1) {
-                        return totalWrites + writeData(dst, remaining - totalWrites, offset - (1+4+1));
-                    } else {
-                        throw new IllegalArgumentException("Demo message write offset must be on a value boundary.");
-                    }
+        boolean offsetUsed = false;
+        if(offset == 0) {
+            offsetUsed = true;
+            if ((writeSize = writeByte(getMessageType(), dst, remaining - totalWrites)) == 0) {
+                return totalWrites;
             }
-        } else {
-            switch (offset) {
-                case 0:
-                    if ((writeSize = writeByte(getMessageType(), dst, remaining - totalWrites)) == 0) {
-                        return totalWrites;
-                    }
-                    totalWrites += writeSize;
-                case 1:
-                    if ((writeSize = writeInt(tick, dst, remaining - totalWrites)) == 0) {
-                        return totalWrites;
-                    }
-                    totalWrites += writeSize;
-                case 1+4:
-                    return totalWrites + writeData(dst, remaining - totalWrites, 0);
-                default:
-                    if(offset > 1+4) {
-                        return totalWrites + writeData(dst, remaining - totalWrites, offset - (1+4+1));
-                    } else {
-                        throw new IllegalArgumentException("Demo message write offset must be on a value boundary.");
-                    }
-            }
+            totalWrites += writeSize;
         }
+        if(offsetUsed || offset == 1) {
+            if ((writeSize = writeInt(tick, dst, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 1+4) {
+            if ((writeSize = writeByte((byte) 0x00, dst, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 1+4+1) {
+            return totalWrites + writeData(dst, remaining - totalWrites, 0);
+        }
+
+        if(offset > 1+4+1) {
+            // TODO: GET RID OF THIS CAST TO INT
+            return totalWrites + writeData(dst, remaining - totalWrites, (int) (offset - (1+4+1)));
+        } else {
+            throw new IllegalArgumentException("Demo message write offset must be on a value boundary.");
+        }
+
     }
 
 

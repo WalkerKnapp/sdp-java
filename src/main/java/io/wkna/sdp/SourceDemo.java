@@ -155,71 +155,92 @@ public class SourceDemo {
         return 8 + 4 + 4 + 260 + 260 + 260 + 260 + 4 + 4 + 4 + 4;
     }
 
-    int writeHeader(ByteBuffer buffer, int remaining, int offset) {
+    int writeHeader(ByteBuffer buffer, int remaining, long offset) {
 
         int writeSize;
         int totalWrites = 0;
 
-        switch (offset) {
-            case 0:
-                if((writeSize = writeString(demoFileStamp, buffer, remaining - totalWrites, 8)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8:
-                if((writeSize = writeInt(demoProtocol, buffer, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4:
-                if((writeSize = writeInt(networkProtocol, buffer, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4:
-                if((writeSize = writeString(serverName, buffer, remaining - totalWrites, 260)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4+260:
-                if((writeSize = writeString(clientName, buffer, remaining - totalWrites, 260)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4+260+260:
-                if((writeSize = writeString(mapName, buffer, remaining - totalWrites, 260)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4+260+260+260:
-                if((writeSize = writeString(gameDirectory, buffer, remaining - totalWrites, 260)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4+260+260+260+260:
-                if((writeSize = writeFloat(playbackTime, buffer, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4+260+260+260+260+4:
-                if((writeSize = writeInt(playbackTicks, buffer, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4+260+260+260+260+4+4:
-                if((writeSize = writeInt(playbackFrames, buffer, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 8+4+4+260+260+260+260+4+4+4:
-                if((writeSize = writeInt(signOnLength, buffer, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
+        boolean offsetUsed = false;
+
+        if(offset == 0) {
+            offsetUsed = true;
+            if((writeSize = writeString(demoFileStamp, buffer, remaining - totalWrites, 8)) == 0) {
                 return totalWrites;
-            default:
-                throw new IllegalArgumentException("Header read offset must be on a value boundary.");
+            }
+            totalWrites += writeSize;
         }
+        if(offsetUsed || offset == 8) {
+            offsetUsed = true;
+            if((writeSize = writeInt(demoProtocol, buffer, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4) {
+            offsetUsed = true;
+            if((writeSize = writeInt(networkProtocol, buffer, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4) {
+            offsetUsed = true;
+            if((writeSize = writeString(serverName, buffer, remaining - totalWrites, 260)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4+260) {
+            offsetUsed = true;
+            if((writeSize = writeString(clientName, buffer, remaining - totalWrites, 260)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4+260+260) {
+            offsetUsed = true;
+            if((writeSize = writeString(mapName, buffer, remaining - totalWrites, 260)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4+260+260+260) {
+            offsetUsed = true;
+            if((writeSize = writeString(gameDirectory, buffer, remaining - totalWrites, 260)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4+260+260+260+260) {
+            offsetUsed = true;
+            if((writeSize = writeFloat(playbackTime, buffer, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4+260+260+260+260+4) {
+            offsetUsed = true;
+            if((writeSize = writeInt(playbackTicks, buffer, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4+260+260+260+260+4+4) {
+            offsetUsed = true;
+            if((writeSize = writeInt(playbackFrames, buffer, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+        }
+        if(offsetUsed || offset == 8+4+4+260+260+260+260+4+4+4) {
+            if((writeSize = writeInt(signOnLength, buffer, remaining - totalWrites)) == 0) {
+                return totalWrites;
+            }
+            totalWrites += writeSize;
+            return totalWrites;
+        }
+
+        throw new IllegalArgumentException("Header read offset must be on a value boundary.");
     }
 
     public static void main(String[] args) throws IOException {
@@ -230,7 +251,7 @@ public class SourceDemo {
         Files.createFile(copyPath);
         try (FileChannel channel = FileChannel.open(copyPath, StandardOpenOption.WRITE);
             DemoWriterChannel reader = demo.createWriter()) {
-            channel.transferFrom(reader, 0, reader.remaining());
+            channel.transferFrom(reader, 0, reader.size());
         }
     }
 

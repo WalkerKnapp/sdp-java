@@ -9,16 +9,17 @@ import static io.wkna.sdp.DemoUtils.*;
 public class ConsoleCmdMessage extends DemoMessage {
     private int size;
     private String data;
+    private byte[] rawBuffer;
 
     public ConsoleCmdMessage(SeekableByteChannel sbc, boolean alignmentByte) throws IOException {
         super(sbc, alignmentByte);
         size = readInt(sbc);
-        System.out.println("\t\tsize: " + size);
-        byte[] rawBuffer = new byte[size];
+        //System.out.println("\t\tsize: " + size);
+        rawBuffer = new byte[size];
         ByteBuffer buffer = ByteBuffer.wrap(rawBuffer);
         sbc.read(buffer);
         data = new String(rawBuffer);
-        System.out.println("\t\tdata: " + data);
+        //System.out.println("\t\tdata: " + data);
     }
 
     @Override
@@ -27,25 +28,24 @@ public class ConsoleCmdMessage extends DemoMessage {
     }
 
     @Override
-    public int writeData(ByteBuffer dst, int remaining, int offset) {
-        int writeSize;
+    public int writeData(ByteBuffer dst, int remaining, long offset) {
         int totalWrites = 0;
 
-        switch (offset) {
-            case 0:
-                if ((writeSize = writeInt(size, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 4:
-                if ((writeSize = writeString(data, dst, remaining - totalWrites, size)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
+        if(offset < 4) {
+            totalWrites += writeInt(size, dst, remaining - totalWrites, (int) offset);
+            if(totalWrites == remaining) {
                 return totalWrites;
-            default:
-                throw new IllegalArgumentException("ConsoleCmd Message offset must fall on a value boundary.");
+            }
         }
+        if(offset < 4+size) {
+            totalWrites += writeRawData(rawBuffer, dst, remaining - totalWrites, getOffset(offset, 4));
+            return totalWrites;
+        }
+        /*if(offset < 4+size) {
+            totalWrites += writeString(data, dst, remaining - totalWrites, size, getOffset(offset, 4));
+            return totalWrites;
+        }*/
+        throw new IllegalArgumentException("ConsoleCmd Message offset must fall on a value boundary.");
     }
 
     @Override

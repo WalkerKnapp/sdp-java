@@ -17,7 +17,7 @@ public class StopMessage extends DemoMessage {
     }
 
     @Override
-    public int writeData(ByteBuffer dst, int remaining, int offset) {
+    public int writeData(ByteBuffer dst, int remaining, long offset) {
         return 0;
     }
 

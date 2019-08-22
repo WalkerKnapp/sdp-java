@@ -43,49 +43,50 @@ public class CmdInfo {
         return 4+12+12+12+12+12+12;
     }
 
-    public int write(ByteBuffer dst, int remaining, int offset) {
-        int writeSize;
+    public int write(ByteBuffer dst, int remaining, long offset) {
         int totalWrites = 0;
 
-        switch (offset) {
-            case 0:
-                if ((writeSize = writeInt(flags, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 4:
-                if ((writeSize = writeFloatArray(viewOrigin, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 4+12:
-                if ((writeSize = writeFloatArray(viewAngles, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 4+12+12:
-                if ((writeSize = writeFloatArray(localViewAngles, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 4+12+12+12:
-                if ((writeSize = writeFloatArray(viewOrigin2, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 4+12+12+12+12:
-                if ((writeSize = writeFloatArray(viewAngles2, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
-            case 4+12+12+12+12+12:
-                if ((writeSize = writeFloatArray(localViewAngles2, dst, remaining - totalWrites)) == 0) {
-                    return totalWrites;
-                }
-                totalWrites += writeSize;
+        if(offset < 4) {
+            totalWrites += writeInt(flags, dst, remaining - totalWrites, (int) offset);
+            if(totalWrites == remaining) {
                 return totalWrites;
-            default:
-                throw new IllegalArgumentException("CmdInfo offset must fall on a value boundary.");
+            }
         }
+        if(offset < 4+12) {
+            totalWrites += writeFloatArray(viewOrigin, dst, remaining - totalWrites, getOffset(offset, 4));
+            if(totalWrites == remaining) {
+                return totalWrites;
+            }
+        }
+        if(offset < 4+12+12) {
+            totalWrites += writeFloatArray(viewAngles, dst, remaining - totalWrites, getOffset(offset, 4+12));
+            if(totalWrites == remaining) {
+                return totalWrites;
+            }
+        }
+        if(offset < 4+12+12+12) {
+            totalWrites += writeFloatArray(localViewAngles, dst, remaining - totalWrites, getOffset(offset, 4+12+12));
+            if(totalWrites == remaining) {
+                return totalWrites;
+            }
+        }
+        if(offset < 4+12+12+12+12) {
+            totalWrites += writeFloatArray(viewOrigin2, dst, remaining - totalWrites, getOffset(offset, 4+12+12+12));
+            if(totalWrites == remaining) {
+                return totalWrites;
+            }
+        }
+        if(offset < 4+12+12+12+12+12) {
+            totalWrites += writeFloatArray(viewAngles2, dst, remaining - totalWrites, getOffset(offset, 4+12+12+12+12));
+            if(totalWrites == remaining) {
+                return totalWrites;
+            }
+        }
+        if(offset < 4+12+12+12+12+12+12) {
+            totalWrites += writeFloatArray(localViewAngles2, dst, remaining - totalWrites, getOffset(offset, 4+12+12+12+12+12));
+            return totalWrites;
+        }
+
+        throw new IllegalArgumentException("CmdInfo offset must fall on a value boundary.");
     }
 }

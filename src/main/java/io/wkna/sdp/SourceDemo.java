@@ -32,29 +32,29 @@ public class SourceDemo {
     public static SourceDemo parse(Path path, boolean headerOnly) throws IOException {
         SourceDemo demo = new SourceDemo();
         try (SeekableByteChannel sbc = Files.newByteChannel(path)) {
-            System.out.println("===== Demo File: " + path.getFileName());
+            //System.out.println("===== Demo File: " + path.getFileName());
             demo.demoFileStamp = readString(sbc, 8);
-            System.out.println("\tdemofilestamp: " + demo.demoFileStamp);
+            //System.out.println("\tdemofilestamp: " + demo.demoFileStamp);
             demo.demoProtocol = readInt(sbc);
-            System.out.println("\tdemoProtocol: " + demo.demoProtocol);
+            //System.out.println("\tdemoProtocol: " + demo.demoProtocol);
             demo.networkProtocol = readInt(sbc);
-            System.out.println("\tnetworkProtocol: " + demo.networkProtocol);
+            //System.out.println("\tnetworkProtocol: " + demo.networkProtocol);
             demo.serverName = readString(sbc, 260).trim();
-            System.out.println("\tserverName: " + demo.serverName);
+            //System.out.println("\tserverName: " + demo.serverName);
             demo.clientName = readString(sbc, 260).trim();
-            System.out.println("\tclientName: " + demo.clientName);
+            //System.out.println("\tclientName: " + demo.clientName);
             demo.mapName = readString(sbc, 260).trim();
-            System.out.println("\tmapName: " + demo.mapName);
+            //System.out.println("\tmapName: " + demo.mapName);
             demo.gameDirectory = readString(sbc, 260).trim();
-            System.out.println("\tgameDirectory: " + demo.gameDirectory);
+            //System.out.println("\tgameDirectory: " + demo.gameDirectory);
             demo.playbackTime = readFloat(sbc);
-            System.out.println("\tplaybackTime: " + demo.playbackTime);
+            //System.out.println("\tplaybackTime: " + demo.playbackTime);
             demo.playbackTicks = readInt(sbc);
-            System.out.println("\tplaybackTicks: " + demo.playbackTicks);
+            //System.out.println("\tplaybackTicks: " + demo.playbackTicks);
             demo.playbackFrames = readInt(sbc);
-            System.out.println("\tplaybackFrames: " + demo.playbackFrames);
+            //System.out.println("\tplaybackFrames: " + demo.playbackFrames);
             demo.signOnLength = readInt(sbc);
-            System.out.println("\tsignOnLength: " + demo.signOnLength);
+            //System.out.println("\tsignOnLength: " + demo.signOnLength);
 
             if(!headerOnly){
                 if(demo.demoProtocol == 4){
@@ -72,7 +72,7 @@ public class SourceDemo {
                         break;
                     }
                     byte messageType = buffer.get(0);
-                    System.out.println("\t=== Message Type: " + messageType);
+                    //System.out.println("\t=== Message Type: " + messageType);
 
                     switch (messageType){
                         case 1: demo.messages.add(new SignOnMessage(sbc, demo.hasAlignmentByte, demo.maxSplitScreenClients)); break;
@@ -156,87 +156,70 @@ public class SourceDemo {
     }
 
     int writeHeader(ByteBuffer buffer, int remaining, long offset) {
-
-        int writeSize;
         int totalWrites = 0;
 
-        boolean offsetUsed = false;
-
-        if(offset == 0) {
-            offsetUsed = true;
-            if((writeSize = writeString(demoFileStamp, buffer, remaining - totalWrites, 8)) == 0) {
+        if(offset < 8) {
+            totalWrites += writeString(demoFileStamp, buffer, remaining - totalWrites, 8, (int) offset);
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8) {
-            offsetUsed = true;
-            if((writeSize = writeInt(demoProtocol, buffer, remaining - totalWrites)) == 0) {
+        if(offset < 8+4) {
+            totalWrites += writeInt(demoProtocol, buffer, remaining - totalWrites, getOffset(offset, 8));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4) {
-            offsetUsed = true;
-            if((writeSize = writeInt(networkProtocol, buffer, remaining - totalWrites)) == 0) {
+        if(offset < 8+4+4) {
+            totalWrites += writeInt(networkProtocol, buffer, remaining - totalWrites, getOffset(offset, 8+4));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4) {
-            offsetUsed = true;
-            if((writeSize = writeString(serverName, buffer, remaining - totalWrites, 260)) == 0) {
+        if(offset < 8+4+4+260) {
+            totalWrites += writeString(serverName, buffer, remaining - totalWrites, 260, getOffset(offset, 8+4+4));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4+260) {
-            offsetUsed = true;
-            if((writeSize = writeString(clientName, buffer, remaining - totalWrites, 260)) == 0) {
+        if(offset < 8+4+4+260+260) {
+            totalWrites += writeString(clientName, buffer, remaining - totalWrites, 260, getOffset(offset, 8+4+4+260));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4+260+260) {
-            offsetUsed = true;
-            if((writeSize = writeString(mapName, buffer, remaining - totalWrites, 260)) == 0) {
+        if(offset < 8+4+4+260+260+260) {
+            totalWrites += writeString(mapName, buffer, remaining - totalWrites, 260, getOffset(offset, 8+4+4+260+260));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4+260+260+260) {
-            offsetUsed = true;
-            if((writeSize = writeString(gameDirectory, buffer, remaining - totalWrites, 260)) == 0) {
+        if(offset < 8+4+4+260+260+260+260) {
+            totalWrites += writeString(gameDirectory, buffer, remaining - totalWrites, 260, getOffset(offset, 8+4+4+260+260+260));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4+260+260+260+260) {
-            offsetUsed = true;
-            if((writeSize = writeFloat(playbackTime, buffer, remaining - totalWrites)) == 0) {
+        if(offset < 8+4+4+260+260+260+260+4) {
+            totalWrites += writeFloat(playbackTime, buffer, remaining - totalWrites, getOffset(offset, 8+4+4+260+260+260+260));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4+260+260+260+260+4) {
-            offsetUsed = true;
-            if((writeSize = writeInt(playbackTicks, buffer, remaining - totalWrites)) == 0) {
+        if(offset < 8+4+4+260+260+260+260+4+4) {
+            totalWrites += writeInt(playbackTicks, buffer, remaining - totalWrites, getOffset(offset, 8+4+4+260+260+260+260+4));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4+260+260+260+260+4+4) {
-            offsetUsed = true;
-            if((writeSize = writeInt(playbackFrames, buffer, remaining - totalWrites)) == 0) {
+        if(offset < 8+4+4+260+260+260+260+4+4+4) {
+            totalWrites += writeInt(playbackFrames, buffer, remaining - totalWrites, getOffset(offset, 8+4+4+260+260+260+260+4+4));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 8+4+4+260+260+260+260+4+4+4) {
-            if((writeSize = writeInt(signOnLength, buffer, remaining - totalWrites)) == 0) {
-                return totalWrites;
-            }
-            totalWrites += writeSize;
+        if(offset < 8+4+4+260+260+260+260+4+4+4+4) {
+            totalWrites += writeInt(signOnLength, buffer, remaining - totalWrites, getOffset(offset, 8+4+4+260+260+260+260+4+4+4));
             return totalWrites;
         }
 
@@ -251,7 +234,10 @@ public class SourceDemo {
         Files.createFile(copyPath);
         try (FileChannel channel = FileChannel.open(copyPath, StandardOpenOption.WRITE);
             DemoWriterChannel reader = demo.createWriter()) {
-            channel.transferFrom(reader, 0, reader.size());
+            long startPos = reader.size()/2;
+            System.err.println(startPos);
+            reader.position(startPos);
+            channel.transferFrom(reader, 0, reader.size() - startPos);
         }
     }
 

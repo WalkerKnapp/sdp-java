@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
 
+import static io.wkna.sdp.DemoUtils.*;
+
 public class NetData {
     // The data type
     private int type;
@@ -19,12 +21,12 @@ public class NetData {
         sbc.read(buffer);
         typeByte = buffer.get(0);
         type = typeByte & 0xFC;
-        System.out.println("\t\t\ttype: " + type);
+        //.out.println("\t\t\ttype: " + type);
         data = new byte[dataSize - 1];
         buffer.position(1);
         buffer.get(data, 0, dataSize - 1);
         //System.out.println("\t\t\tdata: " + new String(data));
-        System.out.println("\t\t\thex: " + HexBin.encode(data));
+        //System.out.println("\t\t\thex: " + HexBin.encode(data));
         /*ByteBuffer floatBuf = ByteBuffer.allocate(4);
         floatBuf.order(ByteOrder.LITTLE_ENDIAN);
         for(int i = 0; i < data.length; i++){
@@ -45,37 +47,21 @@ public class NetData {
         return data.length + 1;
     }
 
-    public int write(ByteBuffer dst, int remaining, int offset) {
-        if(offset == 0) {
-            if(remaining != 0) {
-                dst.put(typeByte);
-                if(remaining > 1 && (remaining - 1) < data.length) {
-                    dst.put(data, 0, remaining - 1);
-                    return remaining;
-                } else if (remaining > 1) {
-                    dst.put(data, 0, data.length);
-                    return data.length + 1;
-                } else {
-                    return 1;
-                }
-            } else {
-                return 0;
-            }
-        } else {
-            if(remaining != 0) {
-                int dataOffset = offset - 1;
+    public int write(ByteBuffer dst, int remaining, long offset) {
+        int totalWrites = 0;
 
-                if(remaining < (data.length - dataOffset)) {
-                    dst.put(data, dataOffset, remaining);
-                    return remaining;
-                } else {
-                    dst.put(data, dataOffset, data.length - dataOffset);
-                    return data.length - dataOffset;
-                }
-            } else {
-                return 0;
+        if(offset < 1) {
+            totalWrites += writeByte(typeByte, dst, remaining - totalWrites);
+            if(totalWrites == remaining) {
+                return totalWrites;
             }
         }
+        if(offset < 1+data.length) {
+            totalWrites += writeRawData(data, dst, remaining - totalWrites, getOffset(offset, 1));
+            return totalWrites;
+        }
+
+        throw new IllegalArgumentException("NetData offset must be less than the size of the data.");
     }
 
     public static void main(String[] args){

@@ -1,5 +1,6 @@
 package io.wkna.sdp;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import io.wkna.sdp.messages.DemoMessage;
 
 import java.io.IOException;
@@ -39,6 +40,8 @@ public class DemoWriterChannel implements SeekableByteChannel {
         int totalRead = 0;
         int remaining = dst.remaining();
 
+        System.out.println("Read. Position: " + position() + ", size: " + remaining + ", dstpos: " + dst.position());
+
         // Try to write as much of the header as possible
         if(amtHeaderRead < demo.getHeaderFlattenedSize()) {
             read = demo.writeHeader(dst, remaining, amtHeaderRead);
@@ -47,6 +50,11 @@ public class DemoWriterChannel implements SeekableByteChannel {
             totalRead += read;
 
             if(amtHeaderRead < demo.getHeaderFlattenedSize()) {
+                byte[] totalBytes = new byte[totalRead];
+                dst.position(0);
+                dst.get(totalBytes);
+                System.out.println(HexBin.encode(totalBytes));
+
                 dst.position(totalRead);
                 return totalRead;
             }
@@ -62,12 +70,22 @@ public class DemoWriterChannel implements SeekableByteChannel {
             totalRead += read;
 
             if(amtCurrentMessageRead < message.getFlattenedSize()) {
+                byte[] totalBytes = new byte[totalRead];
+                dst.position(0);
+                dst.get(totalBytes);
+                System.out.println(HexBin.encode(totalBytes));
+
                 dst.position(totalRead);
                 return totalRead;
             }
             amtCurrentMessageRead = 0;
             currentMessage++;
         }
+
+        byte[] totalBytes = new byte[totalRead];
+        dst.position(0);
+        dst.get(totalBytes);
+        System.out.println(HexBin.encode(totalBytes));
 
         dst.position(totalRead);
         return totalRead;
@@ -96,7 +114,7 @@ public class DemoWriterChannel implements SeekableByteChannel {
             for(int i = 0; i < demo.getMessages().size(); i++) {
                 if(messagePos < demo.getMessages().get(i).getFlattenedSize()) {
                     currentMessage = i;
-                    amtCurrentMessageRead = demo.getMessages().get(i).getFlattenedSize() - messagePos;
+                    amtCurrentMessageRead = messagePos;
                     break;
                 } else {
                     messagePos -= demo.getMessages().get(i).getFlattenedSize();
@@ -104,12 +122,13 @@ public class DemoWriterChannel implements SeekableByteChannel {
             }
         }
 
+        System.out.println("Set position to " + newPosition + ", landing on message " + currentMessage + " with an offset of " + amtCurrentMessageRead);
         return this;
     }
 
     @Override
     public long size() {
-        long remaining = demo.getHeaderFlattenedSize() - amtHeaderRead;
+        /*long remaining = demo.getHeaderFlattenedSize() - amtHeaderRead;
 
         ArrayList<DemoMessage> messages = demo.getMessages();
         remaining += messages.get(currentMessage).getFlattenedSize() - amtCurrentMessageRead;
@@ -117,7 +136,12 @@ public class DemoWriterChannel implements SeekableByteChannel {
             remaining += messages.get(currentMessage).getFlattenedSize();
         }
 
-        return remaining;
+        return remaining;*/
+        long size = demo.getHeaderFlattenedSize();
+        for(DemoMessage m : demo.getMessages()) {
+            size += m.getFlattenedSize();
+        }
+        return size;
     }
 
     @Override

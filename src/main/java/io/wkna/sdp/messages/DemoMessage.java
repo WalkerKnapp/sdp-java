@@ -13,11 +13,11 @@ public abstract class DemoMessage {
     public DemoMessage(SeekableByteChannel sbc, boolean alignmentByte) throws IOException {
         this.tick = readInt(sbc);
         this.alignmentByte = alignmentByte;
-        System.out.println("\t\ttick: " + tick);
+        //System.out.println("\t\ttick: " + tick);
         if(alignmentByte){
             ByteBuffer buffer = ByteBuffer.allocate(1);
             sbc.read(buffer);
-            System.out.println("\t\talignmentbyte");
+            //System.out.println("\t\talignmentbyte");
         }
     }
 
@@ -40,44 +40,41 @@ public abstract class DemoMessage {
     abstract long getDataSize();
 
     public int write(ByteBuffer dst, int remaining, long offset) {
-        int writeSize;
         int totalWrites = 0;
 
-        boolean offsetUsed = false;
-        if(offset == 0) {
-            offsetUsed = true;
-            if ((writeSize = writeByte(getMessageType(), dst, remaining - totalWrites)) == 0) {
+        if(offset < 1) {
+            totalWrites += writeByte(getMessageType(), dst, remaining - totalWrites);
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 1) {
-            if ((writeSize = writeInt(tick, dst, remaining - totalWrites)) == 0) {
+        if(offset < 1+4) {
+            totalWrites += writeInt(tick, dst, remaining - totalWrites, getOffset(offset, 1));
+            if(totalWrites == remaining) {
                 return totalWrites;
             }
-            totalWrites += writeSize;
         }
-        if(offsetUsed || offset == 1+4) {
-            if ((writeSize = writeByte((byte) 0x00, dst, remaining - totalWrites)) == 0) {
-                return totalWrites;
+        if(alignmentByte) {
+            if (offset < 1 + 4 + 1) {
+                totalWrites += writeByte((byte) 0x00, dst, remaining - totalWrites);
+                if (totalWrites == remaining) {
+                    return totalWrites;
+                }
             }
-            totalWrites += writeSize;
-        }
-        if(offsetUsed || offset == 1+4+1) {
-            return totalWrites + writeData(dst, remaining - totalWrites, 0);
-        }
-
-        if(offset > 1+4+1) {
-            // TODO: GET RID OF THIS CAST TO INT
-            return totalWrites + writeData(dst, remaining - totalWrites, (int) (offset - (1+4+1)));
+            if (offset < 1 + 4 + 1 + getDataSize()) {
+                return totalWrites + writeData(dst, remaining - totalWrites, getOffsetLong(offset, 1 + 4 + 1));
+            }
         } else {
-            throw new IllegalArgumentException("Demo message write offset must be on a value boundary.");
+            if (offset < 1 + 4 + getDataSize()) {
+                return totalWrites + writeData(dst, remaining - totalWrites, getOffsetLong(offset, 1 + 4));
+            }
         }
 
+        throw new IllegalArgumentException("Demo message write offset must be on a value boundary. Was actually: " + offset);
     }
 
 
-    public abstract int writeData(ByteBuffer dst, int remaining, int offset);
+    abstract int writeData(ByteBuffer dst, int remaining, long offset);
 
     public abstract byte getMessageType();
 }

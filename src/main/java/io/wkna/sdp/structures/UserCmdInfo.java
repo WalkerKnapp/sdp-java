@@ -6,8 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 
-import static io.wkna.sdp.DemoUtils.writeFloatArray;
-import static io.wkna.sdp.DemoUtils.writeInt;
+import static io.wkna.sdp.DemoUtils.*;
 
 /*
 * https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/game/shared/usercmd.cpp
@@ -33,59 +32,59 @@ public class UserCmdInfo {
         rawBuffer = new byte[size];
         ByteBuffer buffer = ByteBuffer.wrap(rawBuffer);
         sbc.read(buffer);
-        System.out.println("\t\t\tfulldata: " + new String(rawBuffer));
+        //System.out.println("\t\t\tfulldata: " + new String(rawBuffer));
 
         int bitsize = size * 8;
         BitUtils bitSet = new BitUtils(rawBuffer);
         if(bitSet.getCurrentBitIndex() + 33 < bitsize && bitSet.getNextBoolean()){
             commandNumber = (int) bitSet.getNextLong(32);
-            System.out.println("\t\t\tcommandNumber: " + commandNumber);
+            //System.out.println("\t\t\tcommandNumber: " + commandNumber);
         }
         if(bitSet.getCurrentBitIndex() + 33 < bitsize && bitSet.getNextBoolean()){
             tickCount = (int) bitSet.getNextLong(32);
-            System.out.println("\t\t\ttickCount: " + tickCount);
+            //System.out.println("\t\t\ttickCount: " + tickCount);
         }
         for(int i = 0; i < 3; i++){
             if(bitSet.getCurrentBitIndex() + 33 < bitsize && bitSet.getNextBoolean()){
                 viewAngles[i] = Float.intBitsToFloat((int) bitSet.getNextLong(32));
-                System.out.println("\t\t\tviewAngle " + i + ": " + viewAngles[i]);
+                //System.out.println("\t\t\tviewAngle " + i + ": " + viewAngles[i]);
             }
         }
         if(bitSet.getCurrentBitIndex() + 33 < bitsize && bitSet.getNextBoolean()){
             forwardMove = Float.intBitsToFloat((int) bitSet.getNextLong(32));
-            System.out.println("\t\t\tforwardMove: " + forwardMove);
+            //System.out.println("\t\t\tforwardMove: " + forwardMove);
         }
         if(bitSet.getCurrentBitIndex() + 33 < bitsize && bitSet.getNextBoolean()){
             sideMove = Float.intBitsToFloat((int) bitSet.getNextLong(32));
-            System.out.println("\t\t\tsideMove: " + sideMove);
+            //System.out.println("\t\t\tsideMove: " + sideMove);
         }
         if(bitSet.getCurrentBitIndex() + 33 < bitsize && bitSet.getNextBoolean()){
             upMove = Float.intBitsToFloat((int) bitSet.getNextLong(32));
-            System.out.println("\t\t\tupMove: " + upMove);
+            //System.out.println("\t\t\tupMove: " + upMove);
         }
         if(bitSet.getCurrentBitIndex() + 33 < bitsize && bitSet.getNextBoolean()){
             buttons = (int) bitSet.getNextLong(32);
-            System.out.println("\t\t\tbuttons: " + buttons);
+            //System.out.println("\t\t\tbuttons: " + buttons);
         }
         if(bitSet.getCurrentBitIndex() + 9 < bitsize && bitSet.getNextBoolean()){
             impulse = (int) bitSet.getNextLong(8);
-            System.out.println("\t\t\timpulse: " + impulse);
+            //System.out.println("\t\t\timpulse: " + impulse);
         }
         if(bitSet.getCurrentBitIndex() + 12 < bitsize && bitSet.getNextBoolean()){
             weaponSelect = (int) bitSet.getNextLong(11);
-            System.out.println("\t\t\tweaponSelect: " + weaponSelect);
+            //System.out.println("\t\t\tweaponSelect: " + weaponSelect);
             if(bitSet.getCurrentBitIndex() + 7 < bitsize && bitSet.getNextBoolean()){
                 weaponSubtype = (int) bitSet.getNextLong(6);
-                System.out.println("\t\t\tweaponSubtype: " + weaponSubtype);
+                //System.out.println("\t\t\tweaponSubtype: " + weaponSubtype);
             }
         }
         if(bitSet.getCurrentBitIndex() + 17 < bitsize && bitSet.getNextBoolean()){
             mouseDx = (short) bitSet.getNextLong(16);
-            System.out.println("\t\t\tmouseDx: " + mouseDx);
+            //System.out.println("\t\t\tmouseDx: " + mouseDx);
         }
         if(bitSet.getCurrentBitIndex() + 17 < bitsize && bitSet.getNextBoolean()){
             mouseDy = (short) bitSet.getNextLong(16);
-            System.out.println("\t\t\tmouseDy: " + mouseDy);
+            //System.out.println("\t\t\tmouseDy: " + mouseDy);
         }
     }
 
@@ -94,12 +93,7 @@ public class UserCmdInfo {
         return rawBuffer.length;
     }
 
-    public int write(ByteBuffer dst, int remaining, int offset) {
-        if(remaining >= rawBuffer.length) {
-            dst.put(rawBuffer);
-            return rawBuffer.length;
-        } else {
-            return 0;
-        }
+    public int write(ByteBuffer dst, int remaining, long offset) {
+        return writeRawData(rawBuffer, dst, remaining, (int) offset);
     }
 }
